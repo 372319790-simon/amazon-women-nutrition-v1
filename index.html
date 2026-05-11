@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon US 女性膳食营养品类目分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6; padding: 0;
+}
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+/* Header */
+.header { 
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 32px 24px; margin-bottom: 24px;
+  text-align: center;
+}
+.header h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.header .sub { color: var(--muted); margin-top: 8px; font-size: 0.9rem; }
+.header .date { color: var(--muted); font-size: 0.8rem; }
+
+/* KPI Cards */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card { 
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
+  padding: 20px; text-align: center; transition: transform 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); }
+.kpi-card .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.kpi-card .value { font-size: 1.8rem; font-weight: 700; }
+.kpi-card .unit { font-size: 0.75rem; color: var(--muted); }
+.accent { color: var(--accent); }
+.green { color: var(--green); }
+.blue { color: var(--blue); }
+.purple { color: var(--purple); }
+.pink { color: var(--pink); }
+
+/* Section */
+.section { margin-bottom: 32px; }
+.section-title { 
+  font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;
+  padding-bottom: 8px; border-bottom: 2px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title .icon { font-size: 1.5rem; }
+
+/* Table */
+.table-wrap { 
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; margin-bottom: 24px;
+}
+.toolbar { 
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+}
+.toolbar input { 
+  background: #0f172a; border: 1px solid var(--border); color: var(--text);
+  padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; width: 200px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+thead { background: #0f172a; position: sticky; top: 0; }
+th { 
+  padding: 10px 8px; text-align: left; color: var(--muted); font-weight: 600; 
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; cursor: pointer;
+  white-space: nowrap; user-select: none;
+}
+th:hover { color: var(--accent); }
+td { padding: 8px; border-top: 1px solid var(--border); }
+tr:hover td { background: rgba(245, 158, 11, 0.05); }
+.bar-cell { position: relative; }
+.bar-cell .fill { 
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  border-radius: 0; z-index: 0;
+}
+.bar-cell span { position: relative; z-index: 1; }
+
+/* Badges */
+.badge { 
+  display: inline-block; padding: 2px 8px; border-radius: 10px; 
+  font-size: 0.7rem; font-weight: 600;
+}
+.badge-low { background: rgba(16,185,129,0.15); color: var(--green); }
+.badge-mid { background: rgba(245,158,11,0.15); color: var(--accent); }
+.badge-high { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge-new { background: rgba(139,92,246,0.15); color: var(--purple); }
+
+/* Charts */
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.chart-card h3 { font-size: 1rem; margin-bottom: 16px; color: var(--accent); }
+.chart-card canvas { max-height: 500px; }
+
+/* Sub-category detail */
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-bottom: 24px; }
+.detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.detail-card .card-header { 
+  padding: 16px 20px; font-weight: 700; font-size: 1rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.detail-card .card-body { padding: 16px 20px; }
+.detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(51,65,85,0.5); font-size: 0.85rem; }
+.detail-row:last-child { border-bottom: none; }
+.detail-row .dl { color: var(--muted); }
+.detail-row .dv { font-weight: 600; }
+
+/* Notes */
+.notes { font-size: 0.8rem; color: var(--muted); padding: 12px 0; }
+.notes span { color: var(--red); font-weight: 600; }
+
+/* Footer */
+.footer { text-align: center; padding: 24px; color: var(--muted); font-size: 0.8rem; border-top: 1px solid var(--border); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chart-grid, .detail-grid { grid-template-columns: 1fr; }
+  .header h1 { font-size: 1.4rem; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Column highlight */
+.col-green { color: var(--green); font-weight: 600; }
+.col-red { color: var(--red); font-weight: 600; }
+.col-yellow { color: var(--accent); font-weight: 600; }
+
+.sort-asc::after { content: ' ▲'; }
+.sort-desc::after { content: ' ▼'; }
+</style>
+</head>
+<body>
+<div id="login-gate" style="position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <h1 style="font-size:2rem;color:var(--accent);">🔒 数据报表</h1>
+  <p style="color:var(--muted);">请输入访问密码</p>
+  <input id="pw-input" type="password" placeholder="密码" autofocus
+    style="width:280px;padding:12px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text);font-size:1rem;outline:none;"
+    onkeydown="if(event.key==='Enter')checkPw()">
+  <button onclick="checkPw()" style="padding:10px 32px;background:var(--accent);color:#0f172a;border:none;border-radius:8px;font-size:1rem;font-weight:bold;cursor:pointer;">进入</button>
+  <p id="pw-error" style="color:var(--red);font-size:0.85rem;display:none;">密码错误</p>
+</div>
+<script>
+async function sha256(t){const e=new TextEncoder().encode(t);const h=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function checkPw(){
+  const input=document.getElementById('pw-input').value;
+  const hash=await sha256(input);
+  if(hash==='a039a69595e7c9460cf21cf9d5ace5dbe8d65afe1fe50150de6b96d8815ac15c'){
+    document.getElementById('login-gate').style.display='none';
+    document.getElementById('main-content').style.display='block';
+    sessionStorage.setItem('_auth','1');
+  }else{
+    document.getElementById('pw-error').style.display='block';
+    document.getElementById('pw-input').value='';
+  }
+}
+if(sessionStorage.getItem('_auth')==='1'){
+  document.getElementById('login-gate').style.display='none';
+  document.getElementById('main-content').style.display='block';
+}
+</script>
+<div id="main-content" style="display:none;">
+
+<div class="header">
+  <h1>🛒 Amazon US 女性膳食营养品 · 类目分析报告</h1>
+  <div class="sub">Amazon US 女性膳食营养品 · 33个细分市场全景分析</div>
+  <div class="date">报告生成：2026年5月8日 | 数据窗口：2026年4月</div>
+</div>
+
+<div class="container">
+
+<!-- KPI Cards -->
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<!-- Market Landscape Chart -->
+<div class="section">
+  <div class="section-title"><span class="icon">📊</span> 市场格局：规模 vs 竞争集中度</div>
+  <div class="chart-card" style="position:relative; height:480px;">
+    <canvas id="bubbleChart"></canvas>
+  </div>
+  <div class="notes">气泡大小 = 月销售额 | 悬浮显示详细数据 | Y轴对数刻度</div>
+</div>
+
+<!-- Category Ranking Table -->
+<div class="section">
+  <div class="section-title"><span class="icon">🏆</span> 女性相关类目完整排名 (TOP 33)</div>
+  <div class="table-wrap">
+    <div class="toolbar">
+      <input type="text" id="tableSearch" placeholder="🔍 搜索类目..." oninput="filterTable()">
+      <span style="color:var(--muted);font-size:0.8rem;" id="tableCount"></span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="categoryTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">排名</th>
+            <th onclick="sortTable(1)">类目名称(英文)</th>
+            <th onclick="sortTable(2)">中文名</th>
+            <th onclick="sortTable(3)">月总销量</th>
+            <th onclick="sortTable(4)">月销售额($)</th>
+            <th onclick="sortTable(5)">均价($)</th>
+            <th onclick="sortTable(6)">商品集中度</th>
+            <th onclick="sortTable(7)">品牌集中度</th>
+            <th onclick="sortTable(8)">毛利率</th>
+            <th onclick="sortTable(9)">退货率</th>
+            <th onclick="sortTable(10)">新品占比</th>
+            <th onclick="sortTable(11)">搜索购买比</th>
+            <th>FBA%</th>
+            <th>AMZ%</th>
+            <th>机会评估</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="section">
+  <div class="section-title"><span class="icon">📈</span> 关键指标对比</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>月销售额 TOP 10 类目</h3>
+      <canvas id="revenueChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>FBA / AMZ 自营 / FBM 分布</h3>
+      <canvas id="sellerChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>毛利率 vs 退货率 散点</h3>
+      <canvas id="marginReturnsChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>新品占比 vs 搜索购买比</h3>
+      <canvas id="newProductsChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Sub-category Deep Dive -->
+<div class="section">
+  <div class="section-title"><span class="icon">🔬</span> 6大女性细分品类 · 统一 TOP100 取样分析</div>
+  <div class="detail-grid">
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#8b5cf633,#8b5cf608); color:#8b5cf6; border-left:3px solid #8b5cf6;">
+        女性益生菌 <span style="font-size:0.75rem;opacity:0.7;">Probiotics for Women</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">3.39M 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$101.7M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$31.65</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">18K / ⭐4.5</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">68.8%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 56.0% | AMZ 38.0% | FBM 6.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">94.0% / 84.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent">>$40 (26个, 26%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">88.3% / 8.3%</span></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#ec489933,#ec489908); color:#ec4899; border-left:3px solid #ec4899;">
+        铁软糖 <span style="font-size:0.75rem;opacity:0.7;">Iron Gummies</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">183K 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$3.9M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$21.82</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">1K / ⭐4.4</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">61.6%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 85.0% | AMZ 14.0% | FBM 0.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">97.0% / 49.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent"><$15 (31个, 31%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">71.1% / 27.7%</span></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#f59e0b33,#f59e0b08); color:#f59e0b; border-left:3px solid #f59e0b;">
+        白芸豆提取物碳水阻断剂 <span style="font-size:0.75rem;opacity:0.7;">White Kidney Bean Extract</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">125K 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$4.7M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$26.84</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">1K / ⭐4.2</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">65.4%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 88.0% | AMZ 3.0% | FBM 7.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">84.0% / 53.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent"><$15 (31个, 31%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">83.1% / 1.1%</span></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#10b98133,#10b98108); color:#10b981; border-left:3px solid #10b981;">
+        胶原蛋白肽 <span style="font-size:0.75rem;opacity:0.7;">Collagen Peptides</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">1.94M 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$73.5M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$39.52</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">14K / ⭐4.5</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">67.2%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 90.0% | AMZ 8.0% | FBM 0.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">90.0% / 77.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent">>$40 (38个, 38%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">80.0% / 11.1%</span></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#06b6d433,#06b6d408); color:#06b6d4; border-left:3px solid #06b6d4;">
+        胶原蛋白肽软糖 <span style="font-size:0.75rem;opacity:0.7;">Collagen Peptides Gummies</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">657K 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$18.1M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$26.8</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">3K / ⭐4.5</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">64.0%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 90.0% | AMZ 5.0% | FBM 4.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">97.0% / 68.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent"><$15 (26个, 26%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">67.4% / 30.4%</span></div>
+      </div>
+    </div>
+    <div class="detail-card">
+      <div class="card-header" style="background:linear-gradient(135deg,#3b82f633,#3b82f608); color:#3b82f6; border-left:3px solid #3b82f6;">
+        蘑菇软糖 <span style="font-size:0.75rem;opacity:0.7;">Mushrooms Gummies</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="dl">TOP100 月总销量</span><span class="dv green">220K 件</span></div>
+        <div class="detail-row"><span class="dl">TOP100 月总销售额</span><span class="dv">$8.2M</span></div>
+        <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$30.92</span></div>
+        <div class="detail-row"><span class="dl">平均评分数 / 星级</span><span class="dv">996 / ⭐4.3</span></div>
+        <div class="detail-row"><span class="dl">平均毛利率</span><span class="dv">67.8%</span></div>
+        <div class="detail-row"><span class="dl">配送方式分布</span><span class="dv">FBA 86.0% | AMZ 2.0% | FBM 12.0%</span></div>
+        <div class="detail-row"><span class="dl">A+页面 / 视频覆盖率</span><span class="dv">85.0% / 65.0%</span></div>
+        <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent">$30-40 (29个, 29%)</span></div>
+        <div class="detail-row"><span class="dl">美国 / 中国卖家占比</span><span class="dv">87.1% / 10.8%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="notes">取样范围：各品类关键词搜索结果 TOP100 Listing · 配送方式占比基于同一100样本计算，FBA/AMZ/FBM之和≤100%</div>
+</div>
+
+<!-- Conclusion -->
+<div class="section">
+  <div class="section-title"><span class="icon">💡</span> 数据分析结论</div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;">
+    <h4 style="color:var(--green);margin-bottom:12px;">🏆 推荐优先切入类目</h4>
+    <table style="margin-bottom:20px;">
+      <thead><tr><th>类目</th><th>月销规模</th><th>集中度</th><th>新品机会</th><th>毛利率</th><th>推荐理由</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Collagen 胶原蛋白</strong></td><td>1,587,704件 / $520K</td><td><span class="badge badge-low">0.49 低</span></td><td>2% (新品均价$31)</td><td>68%</td><td>女性营养品最大池，集中度低，品牌分散，A+占比95%说明内容竞争激烈但无寡头</td></tr>
+        <tr><td><strong>Probiotics 益生菌</strong></td><td>927,068件 / $342K</td><td><span class="badge badge-low">0.42 低</span></td><td>5% (新品均价$60!)</td><td>70%</td><td>新品溢价85%证明高端新品牌有空间；女性子类月销187万件更庞大</td></tr>
+        <tr><td><strong>Dietary Fibers 膳食纤维</strong></td><td>847,902件 / $181K</td><td><span class="badge badge-low">0.47 低</span></td><td>7% 活跃</td><td>63%</td><td>Metamucil一家独大但非垄断，AMZ仅36%自营，FBA 59%适合第三方</td></tr>
+        <tr><td><strong>Iron 铁剂</strong></td><td>715,049件 / $126K</td><td><span class="badge badge-low">0.45 低</span></td><td>0% (软糖机会!)</td><td>60%</td><td>Iron Gummies子类月销20万件，中国卖家已占7%，剂型差异化窗口还在</td></tr>
+        <tr><td><strong>Fat Burners 燃脂</strong></td><td>229,622件 / $77K</td><td><span class="badge badge-low">0.37 极低</span></td><td>10% 最活跃</td><td>69%</td><td>集中度最低，新品占比最高，但搜索购买比仅10.1，需内容营销驱动</td></tr>
+      </tbody>
+    </table>
+    
+    <h4 style="color:var(--red);margin-bottom:12px;">⚠️ 谨慎/暂缓类目</h4>
+    <table>
+      <thead><tr><th>类目</th><th>核心风险</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Carb Blockers 碳水阻断剂</strong></td><td>商品集中度0.86 + 品牌集中度0.91 → 严重寡头垄断，仅110个商品</td></tr>
+        <tr><td><strong>Ready to Drink Shakes 即饮奶昔</strong></td><td>集中度0.92，品牌集中度0.98 → 几近完全垄断</td></tr>
+        <tr><td><strong>Meal Replacement Drinks 代餐</strong></td><td>品牌集中度0.83，平均重量2.99磅 → FBA运费极高，利润空间薄</td></tr>
+        <tr><td><strong>Protein Drinks 蛋白质饮品</strong></td><td>AMZ自营52% + 品牌集中度0.92 → 平台倾轧严重，第三方空间极小</td></tr>
+        <tr><td><strong>Diuretics 利尿剂</strong></td><td>商品集中度0.82 + 退货率0.36%偏高 → 产品风险大</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Amazon US 2026年4-5月数据 | TOP100 Listing样本 + 搜索关键词数据</p>
+  <p>覆盖 6 大细分品类：女性益生菌 | 铁软糖 | 白芸豆提取物 | 胶原蛋白肽 | 胶原蛋白肽软糖 | 蘑菇软糖</p>
+  <p style="margin-top:8px;color:var(--red);">⚠️ 凡标注「数据不足」的字段，表示原始数据中该维度不可用</p>
+</div>
+
+</div>
+
+<script>
+// DATA - injected from Python extraction
+const CATEGORIES = [{"name": "Magnesium", "cn_name": "镁", "path": "Health & Household:Vitamins, Minerals & Supplements:Minerals:Magnesium", "sales": 2676442, "revenue": 607572.0, "price": 21.78, "concentration": 0.374, "brand_conc": 0.488, "margin": 0.63, "returns": 0.00279, "sp_ratio": 22.49701, "new_pct": 0.01, "fba_pct": 0.71, "amz_pct": 0.27, "fbm_pct": 0.0, "total_products": "4010", "a_plus": "1", "avg_reviews": "10671", "avg_stars": "4.6", "seller_origin": "美国\n89.0%"}, {"name": "Protein Drinks", "cn_name": "蛋白质饮品", "path": "Grocery & Gourmet Food:Beverages:Bottled Beverages, Water & Drink Mixes:Meal Replacement & Protein Drinks:Protein Drinks", "sales": 1772813, "revenue": 631835.0, "price": 34.26, "concentration": 0.728, "brand_conc": 0.92, "margin": 0.54, "returns": 0.002388, "sp_ratio": 37.41704, "new_pct": 0.11, "fba_pct": 0.38, "amz_pct": 0.52, "fbm_pct": 0.06, "total_products": "663", "a_plus": "0.8", "avg_reviews": "2649", "avg_stars": "4.4", "seller_origin": "美国\n98.0%"}, {"name": "Multivitamins", "cn_name": "复合维生素", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Multivitamins", "sales": 1749239, "revenue": 398324.0, "price": 24.73, "concentration": 0.325, "brand_conc": 0.714, "margin": 0.62, "returns": 0.0028549999, "sp_ratio": 23.58118, "new_pct": 0, "fba_pct": 0.34, "amz_pct": 0.57, "fbm_pct": 0.02, "total_products": "4629", "a_plus": "0.94", "avg_reviews": "10397", "avg_stars": "4.6", "seller_origin": "美国\n100.0%"}, {"name": "Collagen", "cn_name": "胶原", "path": "Health & Household:Vitamins, Minerals & Supplements:Collagen", "sales": 1587704, "revenue": 520313.0, "price": 33.33, "concentration": 0.493, "brand_conc": 0.576, "margin": 0.68, "returns": 0.002742, "sp_ratio": 18.72056, "new_pct": 0.02, "fba_pct": 0.79, "amz_pct": 0.14, "fbm_pct": 0.02, "total_products": "2740", "a_plus": "0.95", "avg_reviews": "11509", "avg_stars": "4.5", "seller_origin": "美国\n93.0%"}, {"name": "Blended Vitamin & Mineral Supplements", "cn_name": "复合维生素及矿物质", "path": "Health & Household:Vitamins, Minerals & Supplements:Blended Vitamin & Mineral Supplements", "sales": 1383271, "revenue": 420185.0, "price": 28.28, "concentration": 0.286, "brand_conc": 0.515, "margin": 0.64, "returns": 0.004287, "sp_ratio": 18.06805, "new_pct": 0.04, "fba_pct": 0.68, "amz_pct": 0.29, "fbm_pct": 0.01, "total_products": "25359", "a_plus": "0.91", "avg_reviews": "6518", "avg_stars": "4.5", "seller_origin": "美国\n98.0%"}, {"name": "Vitamin D", "cn_name": "维生素D", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin D", "sales": 1153167, "revenue": 184468.0, "price": 17.4, "concentration": 0.46, "brand_conc": 0.737, "margin": 0.58, "returns": 0.002671, "sp_ratio": 30.11752, "new_pct": 0, "fba_pct": 0.51, "amz_pct": 0.45, "fbm_pct": 0.0, "total_products": "2281", "a_plus": "0.93", "avg_reviews": "13183", "avg_stars": "4.7", "seller_origin": "美国\n97.0%"}, {"name": "Sleep Supplements", "cn_name": "睡眠补充剂", "path": "Health & Household:Vitamins, Minerals & Supplements:Sleep Supplements", "sales": 1113993, "revenue": 182101.0, "price": 17.66, "concentration": 0.378, "brand_conc": 0.737, "margin": 0.59, "returns": 0.003074, "sp_ratio": 22.49453, "new_pct": 0.01, "fba_pct": 0.46, "amz_pct": 0.48, "fbm_pct": 0.01, "total_products": "2872", "a_plus": "0.96", "avg_reviews": "8877", "avg_stars": "4.5", "seller_origin": "美国\n99.0%"}, {"name": "Vitamin D3 & K2 Combinations", "cn_name": "Vitamin D3 & K2 Combinations", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin D3 & K2 Combinations", "sales": 984600, "revenue": 213361.0, "price": 22.83, "concentration": 0.564, "brand_conc": 0.661, "margin": 0.66, "returns": 0, "sp_ratio": 0, "new_pct": 0.02, "fba_pct": 0.88, "amz_pct": 0.09, "fbm_pct": 0.02, "total_products": "805", "a_plus": "0.95", "avg_reviews": "3891", "avg_stars": "4.7", "seller_origin": "美国\n95.0%"}, {"name": "Probiotics", "cn_name": "益生菌", "path": "Health & Household:Vitamins, Minerals & Supplements:Digestive Supplements:Probiotics", "sales": 927068, "revenue": 342406.0, "price": 32.63, "concentration": 0.415, "brand_conc": 0.591, "margin": 0.7, "returns": 0.002852, "sp_ratio": 23.95641, "new_pct": 0.05, "fba_pct": 0.65, "amz_pct": 0.33, "fbm_pct": 0.01, "total_products": "3378", "a_plus": "0.95", "avg_reviews": "4224", "avg_stars": "4.5", "seller_origin": "美国\n90.0%"}, {"name": "B7 (Biotin)", "cn_name": "B7（生物素）", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin B:B7 (Biotin)", "sales": 877664, "revenue": 278401.0, "price": 23.48, "concentration": 0.576, "brand_conc": 0.751, "margin": 0.61, "returns": 0.002797, "sp_ratio": 22.89011, "new_pct": 0.02, "fba_pct": 0.64, "amz_pct": 0.32, "fbm_pct": 0.0, "total_products": "949", "a_plus": "0.93", "avg_reviews": "8803", "avg_stars": "4.5", "seller_origin": "美国\n95.0%"}, {"name": "Vitamin C", "cn_name": "维生素C", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin C", "sales": 855290, "revenue": 146451.0, "price": 18.23, "concentration": 0.313, "brand_conc": 0.648, "margin": 0.57, "returns": 0.002793, "sp_ratio": 30.52021, "new_pct": 0, "fba_pct": 0.41, "amz_pct": 0.5, "fbm_pct": 0.03, "total_products": "2451", "a_plus": "0.95", "avg_reviews": "8549", "avg_stars": "4.7", "seller_origin": "美国\n99.0%"}, {"name": "Acidophilus", "cn_name": "嗜酸乳", "path": "Health & Household:Vitamins, Minerals & Supplements:Digestive Supplements:Probiotics:Acidophilus", "sales": 853636, "revenue": 233514.0, "price": 27.06, "concentration": 0.556, "brand_conc": 0.787, "margin": 0.67, "returns": 0.002542, "sp_ratio": 28.74424, "new_pct": 0, "fba_pct": 0.5, "amz_pct": 0.39, "fbm_pct": 0.04, "total_products": "1388", "a_plus": "0.96", "avg_reviews": "7316", "avg_stars": "4.6", "seller_origin": "美国\n94.0%"}, {"name": "Dietary Fibers", "cn_name": "膳食纤维", "path": "Health & Household:Vitamins, Minerals & Supplements:Digestive Supplements:Dietary Fibers", "sales": 847902, "revenue": 180518.0, "price": 23.99, "concentration": 0.473, "brand_conc": 0.639, "margin": 0.63, "returns": 0.0026109999, "sp_ratio": 18.99642, "new_pct": 0.07, "fba_pct": 0.59, "amz_pct": 0.36, "fbm_pct": 0.02, "total_products": "1462", "a_plus": "0.84", "avg_reviews": "2513", "avg_stars": "4.4", "seller_origin": "美国\n94.0%"}, {"name": "B12", "cn_name": "B12", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin B:B12", "sales": 772608, "revenue": 124554.0, "price": 17.27, "concentration": 0.37, "brand_conc": 0.612, "margin": 0.58, "returns": 0.002686, "sp_ratio": 30.76184, "new_pct": 0, "fba_pct": 0.56, "amz_pct": 0.41, "fbm_pct": 0.01, "total_products": "1234", "a_plus": "0.97", "avg_reviews": "10736", "avg_stars": "4.7", "seller_origin": "美国\n97.0%"}, {"name": "Iron", "cn_name": "铁", "path": "Health & Household:Vitamins, Minerals & Supplements:Minerals:Iron", "sales": 715049, "revenue": 125977.0, "price": 19.64, "concentration": 0.445, "brand_conc": 0.582, "margin": 0.6, "returns": 0.002797, "sp_ratio": 24.07949, "new_pct": 0, "fba_pct": 0.77, "amz_pct": 0.18, "fbm_pct": 0.02, "total_products": "1057", "a_plus": "0.92", "avg_reviews": "4892", "avg_stars": "4.6", "seller_origin": "美国\n92.0%"}, {"name": "Detox & Cleanse", "cn_name": "排毒和清洁", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Supplements:Detox & Cleanse", "sales": 649635, "revenue": 182172.0, "price": 27.14, "concentration": 0.494, "brand_conc": 0.505, "margin": 0.65, "returns": 0.0031779998, "sp_ratio": 15.59555, "new_pct": 0.01, "fba_pct": 0.86, "amz_pct": 0.09, "fbm_pct": 0.03, "total_products": "3332", "a_plus": "0.93", "avg_reviews": "6734", "avg_stars": "4.4", "seller_origin": "美国\n91.0%"}, {"name": "Prenatal Vitamins", "cn_name": "产前维生素", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Prenatal Vitamins", "sales": 566100, "revenue": 168264.0, "price": 31.92, "concentration": 0.489, "brand_conc": 0.721, "margin": 0.68, "returns": 0.0029820001, "sp_ratio": 15.20604, "new_pct": 0.01, "fba_pct": 0.62, "amz_pct": 0.26, "fbm_pct": 0.04, "total_products": "497", "a_plus": "0.93", "avg_reviews": "3463", "avg_stars": "4.4", "seller_origin": "美国\n98.0%"}, {"name": "B-Complex", "cn_name": "复合维生素 B", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin B:B-Complex", "sales": 544144, "revenue": 112704.0, "price": 24.67, "concentration": 0.45, "brand_conc": 0.588, "margin": 0.64, "returns": 0.0027349999, "sp_ratio": 26.62729, "new_pct": 0.03, "fba_pct": 0.78, "amz_pct": 0.18, "fbm_pct": 0.02, "total_products": "900", "a_plus": "0.95", "avg_reviews": "4630", "avg_stars": "4.6", "seller_origin": "美国\n98.0%"}, {"name": "Prebiotics", "cn_name": "益生元", "path": "Health & Household:Vitamins, Minerals & Supplements:Digestive Supplements:Prebiotics", "sales": 527065, "revenue": 129876.0, "price": 27.47, "concentration": 0.486, "brand_conc": 0.584, "margin": 0.66, "returns": 0.00273, "sp_ratio": 23.89019, "new_pct": 0.06, "fba_pct": 0.73, "amz_pct": 0.25, "fbm_pct": 0.02, "total_products": "1115", "a_plus": "0.98", "avg_reviews": "2986", "avg_stars": "4.5", "seller_origin": "美国\n85.0%"}, {"name": "Herbal Supplements", "cn_name": "草本补充", "path": "Health & Household:Vitamins, Minerals & Supplements:Herbal Supplements", "sales": 500465, "revenue": 134471.0, "price": 25.71, "concentration": 0.409, "brand_conc": 0.497, "margin": 0.66, "returns": 0.002786, "sp_ratio": 16.08717, "new_pct": 0.14, "fba_pct": 0.87, "amz_pct": 0.07, "fbm_pct": 0.06, "total_products": "28618", "a_plus": "0.94", "avg_reviews": "2840", "avg_stars": "4.4", "seller_origin": "美国\n85.0%"}, {"name": "Multi-Enzymes", "cn_name": "多酶", "path": "Health & Household:Vitamins, Minerals & Supplements:Enzymes:Multi-Enzymes", "sales": 445520, "revenue": 119772.0, "price": 29.32, "concentration": 0.408, "brand_conc": 0.553, "margin": 0.67, "returns": 0.0030520002, "sp_ratio": 20.36211, "new_pct": 0, "fba_pct": 0.81, "amz_pct": 0.16, "fbm_pct": 0.0, "total_products": "1690", "a_plus": "0.95", "avg_reviews": "3212", "avg_stars": "4.5", "seller_origin": "美国\n95.0%"}, {"name": "Digestive Supplements", "cn_name": "补充补充剂", "path": "Health & Household:Vitamins, Minerals & Supplements:Digestive Supplements", "sales": 291132, "revenue": 52711.0, "price": 31.65, "concentration": 0.769, "brand_conc": 0.797, "margin": 0.68, "returns": 0.00254, "sp_ratio": 36.32168, "new_pct": 0.31, "fba_pct": 0.71, "amz_pct": 0.16, "fbm_pct": 0.04, "total_products": "5671", "a_plus": "0.81", "avg_reviews": "1006", "avg_stars": "4.3", "seller_origin": "美国\n74.0%"}, {"name": "Meal Replacement Drinks", "cn_name": "膳食替代饮料", "path": "Grocery & Gourmet Food:Beverages:Bottled Beverages, Water & Drink Mixes:Meal Replacement & Protein Drinks:Meal Replacement Drinks", "sales": 268547, "revenue": 120781.0, "price": 49.19, "concentration": 0.616, "brand_conc": 0.828, "margin": 0.66, "returns": 0.0026719999, "sp_ratio": 19.97541, "new_pct": 0.08, "fba_pct": 0.64, "amz_pct": 0.3, "fbm_pct": 0.05, "total_products": "346", "a_plus": "0.86", "avg_reviews": "1566", "avg_stars": "4.3", "seller_origin": "美国\n93.0%"}, {"name": "B9 (Folic Acid)", "cn_name": "叶酸", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin B:B9 (Folic Acid)", "sales": 232041, "revenue": 45668.0, "price": 20.46, "concentration": 0.594, "brand_conc": 0.809, "margin": 0.61, "returns": 0.0026840002, "sp_ratio": 34.03856, "new_pct": 0.05, "fba_pct": 0.84, "amz_pct": 0.13, "fbm_pct": 0.02, "total_products": "419", "a_plus": "0.83", "avg_reviews": "1523", "avg_stars": "4.7", "seller_origin": "美国\n94.0%"}, {"name": "Fat Burners", "cn_name": "脂肪燃烧器", "path": "Health & Household:Vitamins, Minerals & Supplements:Essential Fatty Acids:Fat Burners", "sales": 229622, "revenue": 76649.0, "price": 30.95, "concentration": 0.369, "brand_conc": 0.554, "margin": 0.69, "returns": 0.003308, "sp_ratio": 10.12072, "new_pct": 0.1, "fba_pct": 0.77, "amz_pct": 0.12, "fbm_pct": 0.03, "total_products": "479", "a_plus": "0.79", "avg_reviews": "3737", "avg_stars": "4.2", "seller_origin": "美国\n78.0%"}, {"name": "B6 (Pyridoxal Phosphate)", "cn_name": "B6", "path": "Health & Household:Vitamins, Minerals & Supplements:Vitamins:Vitamin B:B6 (Pyridoxal Phosphate)", "sales": 201186, "revenue": 66296.0, "price": 20.31, "concentration": 0.718, "brand_conc": 0.865, "margin": 0.59, "returns": 0.0029159999, "sp_ratio": 25.44986, "new_pct": 0.05, "fba_pct": 0.78, "amz_pct": 0.11, "fbm_pct": 0.02, "total_products": "223", "a_plus": "0.79", "avg_reviews": "2466", "avg_stars": "4.5", "seller_origin": "美国\n89.0%"}, {"name": "Vitamins, Minerals & Supplements", "cn_name": "身、泳和附剂", "path": "Health & Household:Vitamins, Minerals & Supplements", "sales": 157500, "revenue": 42288.0, "price": 27.98, "concentration": 0.659, "brand_conc": 0.688, "margin": 0.66, "returns": 0.0031400002, "sp_ratio": 22.05931, "new_pct": 0.31, "fba_pct": 0.86, "amz_pct": 0.04, "fbm_pct": 0.06, "total_products": "64976", "a_plus": "0.8", "avg_reviews": "729", "avg_stars": "4.3", "seller_origin": "美国\n66.0%"}, {"name": "Appetite Control & Suppressants", "cn_name": "食欲控制和抑制药", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Appetite Control & Suppressants", "sales": 152815, "revenue": 51125.0, "price": 30.67, "concentration": 0.415, "brand_conc": 0.514, "margin": 0.68, "returns": 0.003441, "sp_ratio": 7.64658, "new_pct": 0.28, "fba_pct": 0.81, "amz_pct": 0.09, "fbm_pct": 0.02, "total_products": "547", "a_plus": "0.86", "avg_reviews": "2056", "avg_stars": "4.1", "seller_origin": "美国\n75.0%"}, {"name": "DIM Supplements", "cn_name": "DIM Supplements", "path": "Health & Household:Vitamins, Minerals & Supplements:DIM Supplements", "sales": 111458, "revenue": 44092.0, "price": 28.0, "concentration": 0.577, "brand_conc": 0.668, "margin": 0.67, "returns": 0, "sp_ratio": 0, "new_pct": 0.05, "fba_pct": 0.9, "amz_pct": 0.08, "fbm_pct": 0.03, "total_products": "100", "a_plus": "0.87", "avg_reviews": "1020", "avg_stars": "4.4", "seller_origin": "美国\n89.6%"}, {"name": "Carb Blockers", "cn_name": "碳水化合物阻滞剂", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Supplements:Carb Blockers", "sales": 82281, "revenue": 38418.0, "price": 35.14, "concentration": 0.86, "brand_conc": 0.905, "margin": 0.7, "returns": 0.003268, "sp_ratio": 10.21372, "new_pct": 0.14, "fba_pct": 0.8, "amz_pct": 0.01, "fbm_pct": 0.11, "total_products": "110", "a_plus": "0.68", "avg_reviews": "852", "avg_stars": "4.2", "seller_origin": "美国\n85.1%"}, {"name": "Ready to Drink Shakes", "cn_name": "准备喝奶昔", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Ready to Drink Shakes", "sales": 66948, "revenue": 30631.0, "price": 47.55, "concentration": 0.922, "brand_conc": 0.977, "margin": 0.65, "returns": 0.0026109999, "sp_ratio": 31.51245, "new_pct": 0.07, "fba_pct": 0.39, "amz_pct": 0.12, "fbm_pct": 0.27, "total_products": "110", "a_plus": "0.57", "avg_reviews": "590", "avg_stars": "4.3", "seller_origin": "美国\n84.0%"}, {"name": "Supplements", "cn_name": "减肥补品", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Supplements", "sales": 63105, "revenue": 11648.0, "price": 32.3, "concentration": 0.767, "brand_conc": 0.781, "margin": 0.67, "returns": 0.0032789998, "sp_ratio": 21.46233, "new_pct": 0.09, "fba_pct": 0.75, "amz_pct": 0.06, "fbm_pct": 0.11, "total_products": "6632", "a_plus": "0.7", "avg_reviews": "740", "avg_stars": "4.3", "seller_origin": "美国\n90.0%"}, {"name": "Diuretics", "cn_name": "利尿剂", "path": "Health & Household:Diet & Sports Nutrition:Weight Loss:Supplements:Diuretics", "sales": 61710, "revenue": 9945.0, "price": 24.64, "concentration": 0.822, "brand_conc": 0.9, "margin": 0.66, "returns": 0.003555, "sp_ratio": 23.57512, "new_pct": 0.04, "fba_pct": 0.62, "amz_pct": 0.07, "fbm_pct": 0.21, "total_products": "109", "a_plus": "0.72", "avg_reviews": "1259", "avg_stars": "4.1", "seller_origin": "美国\n89.0%"}];
+const SUB_DATA = {
+  "女性益生菌": {"cn": "女性益生菌", "en": "Probiotics for Women", "color": "#8b5cf6", "sample_size": 100, "total_listings": 100, "fba_pct": 56.0, "fbm_pct": 6.0, "amz_pct": 38.0, "aplus_pct": 94.0, "video_pct": 84.0, "monthly_sales_total": 3387906, "monthly_revenue_total": 101721005, "avg_price": 31.65, "price_best_range": ">$40 (26个, 26%)", "avg_reviews": 17648, "avg_stars": 4.5, "avg_margin": 68.8, "us_seller_pct": 88.3, "cn_seller_pct": 8.3},
+  "铁软糖": {"cn": "铁软糖", "en": "Iron Gummies", "color": "#ec4899", "sample_size": 100, "total_listings": 100, "fba_pct": 85.0, "fbm_pct": 0.0, "amz_pct": 14.0, "aplus_pct": 97.0, "video_pct": 49.0, "monthly_sales_total": 183038, "monthly_revenue_total": 3874081, "avg_price": 21.82, "price_best_range": "<$15 (31个, 31%)", "avg_reviews": 1318, "avg_stars": 4.4, "avg_margin": 61.6, "us_seller_pct": 71.1, "cn_seller_pct": 27.7},
+  "白芸豆提取物碳水阻断剂": {"cn": "白芸豆提取物碳水阻断剂", "en": "White Kidney Bean Extract", "color": "#f59e0b", "sample_size": 100, "total_listings": 100, "fba_pct": 88.0, "fbm_pct": 7.0, "amz_pct": 3.0, "aplus_pct": 84.0, "video_pct": 53.0, "monthly_sales_total": 124790, "monthly_revenue_total": 4736561, "avg_price": 26.84, "price_best_range": "<$15 (31个, 31%)", "avg_reviews": 1282, "avg_stars": 4.2, "avg_margin": 65.4, "us_seller_pct": 83.1, "cn_seller_pct": 1.1},
+  "胶原蛋白肽": {"cn": "胶原蛋白肽", "en": "Collagen Peptides", "color": "#10b981", "sample_size": 100, "total_listings": 100, "fba_pct": 90.0, "fbm_pct": 0.0, "amz_pct": 8.0, "aplus_pct": 90.0, "video_pct": 77.0, "monthly_sales_total": 1940259, "monthly_revenue_total": 73544837, "avg_price": 39.52, "price_best_range": ">$40 (38个, 38%)", "avg_reviews": 14445, "avg_stars": 4.5, "avg_margin": 67.2, "us_seller_pct": 80.0, "cn_seller_pct": 11.1},
+  "胶原蛋白肽软糖": {"cn": "胶原蛋白肽软糖", "en": "Collagen Peptides Gummies", "color": "#06b6d4", "sample_size": 100, "total_listings": 100, "fba_pct": 90.0, "fbm_pct": 4.0, "amz_pct": 5.0, "aplus_pct": 97.0, "video_pct": 68.0, "monthly_sales_total": 656682, "monthly_revenue_total": 18121641, "avg_price": 26.8, "price_best_range": "<$15 (26个, 26%)", "avg_reviews": 3014, "avg_stars": 4.5, "avg_margin": 64.0, "us_seller_pct": 67.4, "cn_seller_pct": 30.4},
+  "蘑菇软糖": {"cn": "蘑菇软糖", "en": "Mushrooms Gummies", "color": "#3b82f6", "sample_size": 100, "total_listings": 100, "fba_pct": 86.0, "fbm_pct": 12.0, "amz_pct": 2.0, "aplus_pct": 85.0, "video_pct": 65.0, "monthly_sales_total": 219602, "monthly_revenue_total": 8220156, "avg_price": 30.92, "price_best_range": "$30-40 (29个, 29%)", "avg_reviews": 996, "avg_stars": 4.3, "avg_margin": 67.8, "us_seller_pct": 87.1, "cn_seller_pct": 10.8}
+};
+
+
+// KPI Cards
+(function() {
+  const totalSales = CATEGORIES.reduce((s,c) => s + c.sales, 0);
+  const totalRevenue = CATEGORIES.reduce((s,c) => s + c.revenue, 0);
+  const avgMargin = (CATEGORIES.reduce((s,c) => s + c.margin, 0) / CATEGORIES.filter(c=>c.margin>0).length * 100).toFixed(0);
+  const lowConc = CATEGORIES.filter(c => c.concentration < 0.5).length;
+  
+  const kpis = [
+    {label:'女性相关类目数', value:'33', unit:'个', cls:'accent'},
+    {label:'近30天总销量', value:(totalSales/1e6).toFixed(1)+'M', unit:'件', cls:'green'},
+    {label:'近30天总销售额', value:'$'+(totalRevenue/1e6).toFixed(1)+'M', unit:'USD', cls:'blue'},
+    {label:'低集中度类目(<0.5)', value:lowConc, unit:'/33个', cls:'purple'},
+    {label:'平均毛利率', value:avgMargin+'%', unit:'', cls:'pink'}
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => 
+    `<div class="kpi-card"><div class="label">${k.label}</div><div class="value ${k.cls}">${k.value}</div><div class="unit">${k.unit}</div></div>`
+  ).join('');
+})();
+
+// Table
+function renderTable(data) {
+  const body = document.getElementById('tableBody');
+  body.innerHTML = data.map((c,i) => {
+    const concBadge = c.concentration < 0.5 ? 'badge-low' : c.concentration < 0.7 ? 'badge-mid' : 'badge-high';
+    const brandBadge = c.brand_conc < 0.6 ? 'badge-low' : c.brand_conc < 0.8 ? 'badge-mid' : 'badge-high';
+    const newBadge = c.new_pct > 0.08 ? 'badge-new' : '';
+    const newPct = c.new_pct > 0 ? (c.new_pct*100).toFixed(0)+'%' : (c.new_pct === 0 && CATEGORIES.find(x=>x.name===c.name && x.new_pct===0) ? '0%' : '【数据不足】');
+    
+    let opportunity = '';
+    if (c.concentration < 0.5 && c.brand_conc < 0.7 && c.sales > 200000) {
+      opportunity = '<span class="badge badge-low">🟢 优先</span>';
+    } else if (c.brand_conc > 0.85 || c.concentration > 0.8) {
+      opportunity = '<span class="badge badge-high">🔴 高壁垒</span>';
+    } else {
+      opportunity = '<span class="badge badge-mid">🟡 观望</span>';
+    }
+    
+    const maxSales = CATEGORIES[0].sales;
+    const barW = (c.sales / maxSales * 100).toFixed(0);
+    
+    return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.cn_name}</td>
+      <td class="bar-cell"><div class="fill" style="width:${barW}%"></div><span>${c.sales.toLocaleString()}</span></td>
+      <td>$${Math.round(c.revenue).toLocaleString()}</td>
+      <td>$${c.price.toFixed(2)}</td>
+      <td><span class="badge ${concBadge}">${(c.concentration*100).toFixed(0)}%</span></td>
+      <td><span class="badge ${brandBadge}">${(c.brand_conc*100).toFixed(0)}%</span></td>
+      <td>${(c.margin*100).toFixed(0)}%</td>
+      <td>${(c.returns*100).toFixed(2)}%</td>
+      <td><span class="badge ${newBadge}">${newPct}</span></td>
+      <td>${c.sp_ratio > 0 ? c.sp_ratio.toFixed(1) : '【数据不足】'}</td>
+      <td>${(c.fba_pct*100).toFixed(0)}%</td>
+      <td>${(c.amz_pct*100).toFixed(0)}%</td>
+      <td>${opportunity}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableCount').textContent = `共 ${data.length} 个类目`;
+}
+
+renderTable(CATEGORIES);
+
+// Table search
+function filterTable() {
+  const q = document.getElementById('tableSearch').value.toLowerCase();
+  const filtered = CATEGORIES.filter(c => 
+    c.name.toLowerCase().includes(q) || c.cn_name.includes(q) || c.path.toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+// Table sort
+let sortDir = {};
+function sortTable(col) {
+  const keyMap = ['sales','name','cn_name','sales','revenue','price','concentration','brand_conc','margin','returns','new_pct','sp_ratio'];
+  const key = keyMap[col] || 'sales';
+  sortDir[key] = sortDir[key] === 'asc' ? 'desc' : 'asc';
+  const dir = sortDir[key] === 'asc' ? 1 : -1;
+  CATEGORIES.sort((a,b) => {
+    const va = a[key] || 0, vb = b[key] || 0;
+    return va > vb ? dir : va < vb ? -dir : 0;
+  });
+  renderTable(CATEGORIES);
+}
+
+// Chart colors
+const colors = ['#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#f97316','#84cc16','#14b8a6','#a855f7'];
+
+// BUBBLE CHART — Market Landscape
+(function() {
+  const allCats = CATEGORIES.slice(0, 22);
+  const yMin = 30, yMax = 3000, xMin = 20, xMax = 95;
+  
+  const datasets = allCats.map((c,i) => ({
+    label: c.cn_name || c.name,
+    data: [{x: c.concentration * 100, y: c.sales / 1000, r: Math.max(3, Math.sqrt(c.revenue) / 22)}],
+    backgroundColor: colors[i % colors.length] + '99',
+    borderColor: colors[i % colors.length],
+    borderWidth: 2
+  }));
+  
+  new Chart(document.getElementById('bubbleChart'), {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600 },
+      plugins: {
+        legend: { position: 'right', labels: { color: '#94a3b8', font: {size: 9}, boxWidth: 8, padding: 6 } },
+        tooltip: { 
+          backgroundColor: 'rgba(15,23,42,0.96)', titleColor: '#f59e0b', bodyColor: '#e2e8f0',
+          borderColor: '#334155', borderWidth: 1, padding: 14, titleFont: {size: 13, weight: 'bold'}, bodyFont: {size: 11},
+          callbacks: { 
+            title: ctx => (allCats[ctx[0].datasetIndex].cn_name || allCats[ctx[0].datasetIndex].name),
+            label: ctx => {
+              const c = allCats[ctx.datasetIndex];
+              return [`月销量: ${(ctx.raw.y*1000).toLocaleString()} 件`, `月销售额: $${Math.round(c.revenue).toLocaleString()}`,
+                `平均售价: $${c.price.toFixed(0)}`, `商品集中度: ${ctx.raw.x.toFixed(0)}%  |  品牌集中度: ${(c.brand_conc*100).toFixed(0)}%`,
+                `毛利率: ${(c.margin*100).toFixed(0)}%  |  退货率: ${(c.returns*100).toFixed(2)}%`];
+            }
+          } 
+        }
+      },
+      scales: {
+        x: { 
+          type: 'linear',
+          title: { display: true, text: '商品集中度  ← 低（竞争分散）              高（市场垄断） →', color: '#94a3b8', font: {size: 10} },
+          grid: { color: 'rgba(51,65,85,0.3)' }, 
+          ticks: { color: '#94a3b8', font: {size: 10}, stepSize: 10, callback: v => v + '%' }, 
+          min: xMin, max: xMax
+        },
+        y: { 
+          type: 'logarithmic',
+          title: { display: true, text: '月总销量（千件 · 对数刻度）', color: '#94a3b8', font: {size: 10} },
+          grid: { color: 'rgba(51,65,85,0.3)' }, 
+          ticks: { 
+            color: '#94a3b8', font: {size: 10},
+            callback: v => v >= 1000 ? (v/1000).toFixed(1)+'M' : v >= 100 ? v.toFixed(0)+'K' : v.toFixed(0)+'K'
+          },
+          min: yMin, max: yMax
+        }
+      }
+    }
+  });
+})();
+
+// REVENUE BAR CHART
+(function() {
+  const top10 = CATEGORIES.slice(0, 10);
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(c => c.cn_name || c.name),
+      datasets: [{
+        label: '月销售额($)',
+        data: top10.map(c => Math.round(c.revenue)),
+        backgroundColor: colors,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#33415533' }, ticks: { color: '#94a3b8', callback: v => '$'+(v/1000).toFixed(0)+'K' } },
+        y: { ticks: { color: '#e2e8f0', font: {size: 10} } }
+      }
+    }
+  });
+})();
+
+// SELLER TYPE DISTRIBUTION
+(function() {
+  const top10 = CATEGORIES.slice(0, 10);
+  new Chart(document.getElementById('sellerChart'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(c => c.cn_name || c.name),
+      datasets: [
+        { label: 'FBA', data: top10.map(c => Math.round(c.fba_pct*100)), backgroundColor: '#f59e0b' },
+        { label: 'Amazon自营', data: top10.map(c => Math.round(c.amz_pct*100)), backgroundColor: '#3b82f6' },
+        { label: 'FBM', data: top10.map(c => Math.round(c.fbm_pct*100)), backgroundColor: '#334155' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { stacked: true, grid: { color: '#33415533' }, ticks: { color: '#e2e8f0', font: {size: 9} } },
+        y: { stacked: true, max: 100, grid: { color: '#33415533' }, ticks: { color: '#94a3b8', callback: v => v+'%' } }
+      }
+    }
+  });
+})();
+
+// MARGIN vs RETURNS SCATTER
+(function() {
+  const valid = CATEGORIES.filter(c => c.margin > 0 && c.returns > 0);
+  new Chart(document.getElementById('marginReturnsChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: '类目',
+        data: valid.map(c => ({x: c.margin*100, y: c.returns*100})),
+        backgroundColor: valid.map((_,i) => colors[i%colors.length] + '99'),
+        borderColor: valid.map((_,i) => colors[i%colors.length]),
+        borderWidth: 1,
+        pointRadius: Math.min(12, Math.max(4, valid.length / 3))
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { 
+        legend: { display: false },
+        tooltip: { 
+          callbacks: { 
+            label: ctx => {
+              const c = valid[ctx.dataIndex];
+              return `${c.cn_name||c.name}: 毛利率${(c.margin*100).toFixed(0)}% | 退货率${(c.returns*100).toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: '毛利率 (%)', color: '#94a3b8' }, grid: { color: '#33415533' }, ticks: { color: '#94a3b8' } },
+        y: { title: { display: true, text: '退货率 (%)', color: '#94a3b8' }, grid: { color: '#33415533' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+})();
+
+// NEW PRODUCTS vs SEARCH PURCHASE RATIO
+(function() {
+  const valid = CATEGORIES.filter(c => c.new_pct > 0 && c.sp_ratio > 0);
+  new Chart(document.getElementById('newProductsChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: '类目',
+        data: valid.map(c => ({x: c.new_pct*100, y: c.sp_ratio})),
+        backgroundColor: valid.map((_,i) => colors[i%colors.length] + '99'),
+        pointRadius: Math.min(10, Math.max(4, valid.length / 3))
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const c = valid[ctx.dataIndex];
+              return `${c.cn_name||c.name}: 新品${(c.new_pct*100).toFixed(0)}% | 搜索购买比${c.sp_ratio.toFixed(1)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: '新品占比 (%)', color: '#94a3b8' }, grid: { color: '#33415533' }, ticks: { color: '#94a3b8' } },
+        y: { title: { display: true, text: '搜索购买比', color: '#94a3b8' }, grid: { color: '#33415533' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+})();
+
+// SUB-CATEGORY DETAILS
+(function() {
+  const wp = SUB_DATA.women_probiotics;
+  document.getElementById('wpDetail').innerHTML = `
+    <div class="detail-row"><span class="dl">月总销量</span><span class="dv green">${(wp.monthly_sales/1000).toFixed(0)}K 件</span></div>
+    <div class="detail-row"><span class="dl">月总销售额</span><span class="dv">$${(wp.monthly_revenue/1000).toFixed(0)}K</span></div>
+    <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$${wp.avg_price}</span></div>
+    <div class="detail-row"><span class="dl">平均评分数</span><span class="dv">${wp.avg_reviews.toLocaleString()}</span></div>
+    <div class="detail-row"><span class="dl">平均星级</span><span class="dv">⭐ ${wp.avg_stars}</span></div>
+    <div class="detail-row"><span class="dl">头部品牌</span><span class="dv">${wp.top_brand}</span></div>
+    <div class="detail-row"><span class="dl">FBA占比</span><span class="dv">${wp.fba_pct}%</span></div>
+    <div class="detail-row"><span class="dl">Amazon自营占比</span><span class="dv">${wp.amz_pct}%</span></div>
+    <div class="detail-row"><span class="dl">A+视频覆盖率</span><span class="dv">${wp.a_plus_video}%</span></div>
+    <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent">${wp.price_range_strongest}</span></div>
+    <div class="detail-row"><span class="dl">12月内新品数</span><span class="dv">${wp.new_products_12m} 个 (月销${(wp.new_products_sales/1000).toFixed(1)}K)</span></div>
+    <div class="detail-row"><span class="dl">美国卖家占比</span><span class="dv">${wp.us_seller_pct}%</span></div>
+    <div class="detail-row"><span class="dl">中国卖家占比</span><span class="dv">${wp.china_seller_pct}%</span></div>
+    <div style="margin-top:12px;padding:8px;background:rgba(16,185,129,0.1);border-radius:8px;font-size:0.8rem;">
+      💡 <strong>分析</strong>：女性益生菌是益生菌大类下的子类，月销187万件远超通用益生菌的93万件。Physician's CHOICE以20.4%份额居首但非垄断。Amazon自营42.1%说明平台高度看好。$20-25是最热价格带。中国卖家仅占1.8%，竞争壁垒主要来自品牌信任和评论积累(平均12,636评分数)。
+    </div>`;
+  
+  const ig = SUB_DATA.iron_gummies;
+  document.getElementById('igDetail').innerHTML = `
+    <div class="detail-row"><span class="dl">月总销量</span><span class="dv green">${(ig.monthly_sales/1000).toFixed(0)}K 件</span></div>
+    <div class="detail-row"><span class="dl">月总销售额</span><span class="dv">$${(ig.monthly_revenue/1000).toFixed(0)}K</span></div>
+    <div class="detail-row"><span class="dl">平均售价</span><span class="dv">$${ig.avg_price}</span></div>
+    <div class="detail-row"><span class="dl">平均评分数</span><span class="dv">${ig.avg_reviews.toLocaleString()}</span></div>
+    <div class="detail-row"><span class="dl">平均星级</span><span class="dv">⭐ ${ig.avg_stars}</span></div>
+    <div class="detail-row"><span class="dl">头部品牌</span><span class="dv">${ig.top_brand}</span></div>
+    <div class="detail-row"><span class="dl">FBA占比</span><span class="dv">${ig.fba_pct}%</span></div>
+    <div class="detail-row"><span class="dl">Amazon自营占比</span><span class="dv">${ig.amz_pct}%</span></div>
+    <div class="detail-row"><span class="dl">A+视频覆盖率</span><span class="dv">${ig.a_plus_video}%</span></div>
+    <div class="detail-row"><span class="dl">最热价格带</span><span class="dv accent">${ig.price_range_strongest}</span></div>
+    <div class="detail-row"><span class="dl">12月内新品数</span><span class="dv">${ig.new_products_12m} 个 (月销${ig.new_products_sales}件)</span></div>
+    <div class="detail-row"><span class="dl">美国卖家占比</span><span class="dv">${ig.us_seller_pct}%</span></div>
+    <div class="detail-row"><span class="dl">中国卖家占比</span><span class="dv">${ig.china_seller_pct}%</span></div>
+    <div style="margin-top:12px;padding:8px;background:rgba(236,72,153,0.1);border-radius:8px;font-size:0.8rem;">
+      💡 <strong>分析</strong>：铁软糖是铁剂大类下的剂型子类，月销20万件，远小于Iron大类(71.5万件)。TOP1是Pink Stork产前维生素(含铁)，不是纯铁软糖。Nature Made铁软糖定价$10.24偏低端。中国卖家已占7.1%(高于女性益生菌)，说明已经有中国卖家布局。12个月内18个新品(=18%)非常活跃。$15-20是最热价格带。A+视频覆盖率仅49%，内容升级空间大。
+    </div>`;
+})();
+</script>
+
+</div>
+</body>
+</html>
